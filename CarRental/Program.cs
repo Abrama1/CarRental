@@ -1,5 +1,7 @@
 
 using CarRental.Data;
+using CarRental.Interfaces;
+using CarRental.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace CarRental
@@ -13,6 +15,9 @@ namespace CarRental
             // Add services to the container.
             builder.Services.AddDbContext<CarRentalDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
 
 
             builder.Services.AddControllers();
