@@ -22,6 +22,8 @@ namespace CarRental.Data.Models
         // Role handling
         public string Role { get; set; } = "Customer";
 
+        public bool IsDeleted { get; set; } = false;
+
         public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     }
 }
