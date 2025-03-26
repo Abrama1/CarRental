@@ -10,10 +10,12 @@ namespace CarRental.Services
     public class CustomerService : ICustomerService
     {
         private readonly CarRentalDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public CustomerService(CarRentalDbContext context)
+        public CustomerService(CarRentalDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task RegisterAsync(RegisterCustomerRequest dto)
@@ -39,7 +41,8 @@ namespace CarRental.Services
             _context.Customers.Add(customer);
             await _context.SaveChangesAsync();
 
-            // TODO: Call IEmailService.SendVerificationEmailAsync(customer.Email, verificationToken);
+            await _emailService.SendVerificationEmailAsync(customer.Email, verificationToken);
+
         }
 
         public async Task<bool> VerifyEmailAsync(string email, string token)
