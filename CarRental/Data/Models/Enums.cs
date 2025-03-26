@@ -2,6 +2,9 @@
 {
     public enum RentalStatus
     {
+        PendingApproval,
+        Approved,
+        Declined,
         Reserved,
         Ongoing,
         Completed,
