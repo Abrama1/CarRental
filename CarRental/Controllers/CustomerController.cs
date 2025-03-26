@@ -1,8 +1,10 @@
 ﻿using CarRental.Data.DTOs;
 using CarRental.Data.Models;
 using CarRental.Interfaces;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+
+// Alias to avoid conflict with Microsoft.AspNetCore.Identity.Data.LoginRequest
+using LoginDto = CarRental.Data.DTOs.LoginRequest;
 
 namespace CarRental.Controllers
 {
@@ -35,7 +37,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var customer = await _customerService.LoginAsync(request.Email, request.Password);
             if (customer == null) return Unauthorized("Invalid credentials or account not verified.");
