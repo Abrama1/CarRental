@@ -41,26 +41,27 @@ namespace CarRental.Services
 
         public async Task<Rental> CreateRentalAsync(CreateRentalRequest request)
         {
+            var car = await _context.Cars.FindAsync(request.CarId);
+            if (car == null) throw new Exception("Car not found.");
+
             var rental = new Rental
             {
                 CarId = request.CarId,
                 CustomerId = request.CustomerId,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                Status = RentalStatus.PendingApproval
+                Status = RentalStatus.PendingApproval,
+                TotalPrice = (request.EndDate - request.StartDate).Days * car.DailyRate
             };
 
             _context.Rentals.Add(rental);
 
-            var car = await _context.Cars.FindAsync(request.CarId);
-            if (car != null)
-            {
-                car.IsAvailable = false;
-            }
+            car.IsAvailable = false;
 
             await _context.SaveChangesAsync();
             return rental;
         }
+
 
         public async Task CancelRentalAsync(int rentalId, int customerId)
         {

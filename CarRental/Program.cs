@@ -17,6 +17,9 @@ namespace CarRental
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<ICarService, CarService>();
+            builder.Services.AddScoped<ICustomerService, CustomerService>();
+            builder.Services.AddScoped<IRentalService, RentalService>();
 
 
 
