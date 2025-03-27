@@ -26,7 +26,7 @@ namespace CarRental.Services
         public async Task SendVerificationEmailAsync(string toEmail, string token)
         {
             var subject = "Verify your email";
-            var body = $"Please verify your email by clicking the link: https://yourapp.com/verify?email={WebUtility.UrlEncode(toEmail)}&token={WebUtility.UrlEncode(token)}";
+            var body = $"Your verification code is: ${token}";
 
             var mailMessage = new MailMessage(_fromAddress, toEmail, subject, body);
             await _smtpClient.SendMailAsync(mailMessage);

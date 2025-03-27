@@ -1,4 +1,5 @@
 ﻿using CarRental.Data;
+using CarRental.Data.DTOs;
 using CarRental.Data.Models;
 using CarRental.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -31,28 +32,42 @@ namespace CarRental.Services
             return await _context.Cars.FindAsync(id);
         }
 
-        public async Task AddAsync(Car car)
+        public async Task AddAsync(CarCreateRequest request)
         {
+            var car = new Car
+            {
+                Make = request.Make,
+                Model = request.Model,
+                Year = request.Year,
+                DailyRate = request.DailyRate,
+                Location = request.Location,
+                LicensePlate = request.LicensePlate,
+                ImageUrl = request.ImageUrl,
+                IsAvailable = true
+            };
+
             _context.Cars.Add(car);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Car car)
-        {
-            var existing = await _context.Cars.FindAsync(car.Id);
-            if (existing == null) return;
 
-            existing.Make = car.Make;
-            existing.Model = car.Model;
-            existing.Year = car.Year;
-            existing.DailyRate = car.DailyRate;
-            existing.Location = car.Location;
-            existing.IsAvailable = car.IsAvailable;
-            existing.LicensePlate = car.LicensePlate;
-            existing.ImageUrl = car.ImageUrl;
+        public async Task UpdateAsync(CarUpdateRequest request)
+        {
+            var existing = await _context.Cars.FindAsync(request.Id);
+            if (existing == null) throw new Exception("Car not found.");
+
+            existing.Make = request.Make;
+            existing.Model = request.Model;
+            existing.Year = request.Year;
+            existing.DailyRate = request.DailyRate;
+            existing.Location = request.Location;
+            existing.IsAvailable = request.IsAvailable;
+            existing.LicensePlate = request.LicensePlate;
+            existing.ImageUrl = request.ImageUrl;
 
             await _context.SaveChangesAsync();
         }
+
 
         public async Task DeleteAsync(int id)
         {

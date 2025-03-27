@@ -24,14 +24,14 @@ namespace CarRental.Services
             if (exists) throw new Exception("Email already in use");
 
             var tokenBytes = RandomNumberGenerator.GetBytes(32);
-            var verificationToken = Convert.ToBase64String(tokenBytes);
+            var verificationToken = new Random().Next(100000, 999999).ToString();
 
             var customer = new Customer
             {
                 Name = dto.Name,
                 Email = dto.Email,
                 Phone = dto.Phone,
-                PasswordHash = dto.PasswordHash,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 JoinDate = DateTime.UtcNow,
                 IsVerified = false,
                 VerificationToken = verificationToken,

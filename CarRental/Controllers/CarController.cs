@@ -1,4 +1,5 @@
-﻿using CarRental.Data.Models;
+﻿using CarRental.Data.DTOs;
+using CarRental.Data.Models;
 using CarRental.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -38,18 +39,20 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> Add(Car car)
+        public async Task<IActionResult> Add(CarCreateRequest request)
         {
-            await _carService.AddAsync(car);
+            await _carService.AddAsync(request);
             return Ok("Car added successfully.");
         }
 
+
         [HttpPut("update")]
-        public async Task<IActionResult> Update(Car car)
+        public async Task<IActionResult> Update(CarUpdateRequest request)
         {
-            await _carService.UpdateAsync(car);
+            await _carService.UpdateAsync(request);
             return Ok("Car updated successfully.");
         }
+
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
