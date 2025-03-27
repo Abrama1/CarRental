@@ -31,5 +31,12 @@ namespace CarRental.Services
             var mailMessage = new MailMessage(_fromAddress, toEmail, subject, body);
             await _smtpClient.SendMailAsync(mailMessage);
         }
+
+        public async Task SendEmailAsync(string toEmail, string subject, string body)
+        {
+            var mailMessage = new MailMessage(_fromAddress, toEmail, subject, body);
+            await _smtpClient.SendMailAsync(mailMessage);
+        }
+
     }
 }

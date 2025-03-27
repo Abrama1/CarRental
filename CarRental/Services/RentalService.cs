@@ -9,10 +9,12 @@ namespace CarRental.Services
     public class RentalService : IRentalService
     {
         private readonly CarRentalDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public RentalService(CarRentalDbContext context)
+        public RentalService(CarRentalDbContext context, IEmailService emailservice)
         {
             _context = context;
+            _emailService = emailservice;
         }
 
         public async Task<RentalResponse?> GetByIdAsync(int rentalId)
@@ -64,6 +66,20 @@ namespace CarRental.Services
             _context.Rentals.Add(rental);
             car.IsAvailable = false;
             await _context.SaveChangesAsync();
+            string adminEmail = "carrentalalemailservice@gmail.com";
+            string subject = "New Rental Request Received";
+            string message = $@"
+            Rental ID: {rental.Id}
+            Car: {car.Make} {car.Model}
+            Customer ID: {rental.CustomerId}
+            Start Date: {rental.StartDate:yyyy-MM-dd}
+            End Date: {rental.EndDate:yyyy-MM-dd}
+            Total Price: {rental.TotalPrice}
+            Status: {rental.Status}
+            ";
+
+            await _emailService.SendEmailAsync(adminEmail, subject, message);
+
 
             rental.Car = car;
             rental.Customer = await _context.Customers.FindAsync(request.CustomerId);
