@@ -22,6 +22,12 @@ namespace CarRental.Controllers
         [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> Create(CreateRentalRequest request)
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (role != "Admin" && userId != request.CustomerId.ToString())
+                return Forbid("Access denied: You can only create rentals for your own account.");
+
             var rental = await _rentalService.CreateRentalAsync(request);
             return Ok(rental);
         }
