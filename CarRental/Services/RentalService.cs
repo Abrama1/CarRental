@@ -127,8 +127,33 @@ namespace CarRental.Services
             if (rental == null) return;
 
             rental.Status = status;
+
+            var car = await _context.Cars.FindAsync(rental.CarId);
+            if (car != null)
+            {
+                switch (status)
+                {
+                    case RentalStatus.Approved:
+                    case RentalStatus.Ongoing:
+                    case RentalStatus.Reserved:
+                        car.IsAvailable = false;
+                        break;
+
+                    case RentalStatus.Cancelled:
+                    case RentalStatus.Completed:
+                    case RentalStatus.Declined:
+                        car.IsAvailable = true;
+                        break;
+
+                    case RentalStatus.PendingApproval:
+                        car.IsAvailable = true;
+                        break;
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
+
 
         private static RentalResponse MapToResponse(Rental rental)
         {
