@@ -66,12 +66,18 @@ namespace CarRental.Services
             _context.Rentals.Add(rental);
             car.IsAvailable = false;
             await _context.SaveChangesAsync();
+
+
+            rental.Car = car;
+            rental.Customer = await _context.Customers.FindAsync(request.CustomerId);
+
             string adminEmail = "carrentalalemailservice@gmail.com";
             string subject = "New Rental Request Received";
             string message = $@"
             Rental ID: {rental.Id}
             Car: {car.Make} {car.Model}
             Customer ID: {rental.CustomerId}
+            Customer Phone: {rental.Customer.Phone}
             Start Date: {rental.StartDate:yyyy-MM-dd}
             End Date: {rental.EndDate:yyyy-MM-dd}
             Total Price: {rental.TotalPrice}
@@ -79,10 +85,6 @@ namespace CarRental.Services
             ";
 
             await _emailService.SendEmailAsync(adminEmail, subject, message);
-
-
-            rental.Car = car;
-            rental.Customer = await _context.Customers.FindAsync(request.CustomerId);
 
             return MapToResponse(rental);
         }
@@ -138,6 +140,7 @@ namespace CarRental.Services
                 CarModel = rental.Car?.Model ?? "",
                 CustomerId = rental.CustomerId,
                 CustomerName = rental.Customer?.Name ?? "",
+                CustomerPhone = rental.Customer?.Phone ?? "",
                 StartDate = rental.StartDate,
                 EndDate = rental.EndDate,
                 TotalPrice = rental.TotalPrice,

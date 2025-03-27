@@ -10,6 +10,7 @@ namespace CarRental.Data.DTOs
         public string CarModel { get; set; } = null!;
         public int CustomerId { get; set; }
         public string CustomerName { get; set; } = null!;
+        public string CustomerPhone { get; set; } = null!;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal TotalPrice { get; set; }
