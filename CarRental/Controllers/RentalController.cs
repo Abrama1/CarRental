@@ -19,7 +19,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("create")]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> Create(CreateRentalRequest request)
         {
             var rental = await _rentalService.CreateRentalAsync(request);
@@ -44,7 +44,7 @@ namespace CarRental.Controllers
         }
 
         [HttpGet("customer/{customerId}")]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> GetByCustomer(int customerId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -57,7 +57,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("cancel/{rentalId}/customer/{customerId}")]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> Cancel(int rentalId, int customerId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
