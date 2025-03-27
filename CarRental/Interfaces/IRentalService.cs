@@ -12,5 +12,7 @@ namespace CarRental.Interfaces
         Task CancelRentalAsync(int rentalId, int customerId);
         Task CompleteRentalAsync(int rentalId);
         Task SetStatusAsync(int rentalId, RentalStatus status);
+        Task ApproveRentalAsync(int rentalId);
+        Task DeclineRentalAsync(int rentalId);
     }
 }

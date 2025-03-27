@@ -80,7 +80,7 @@ namespace CarRental.Services
             Customer Phone: {rental.Customer.Phone}
             Start Date: {rental.StartDate:yyyy-MM-dd}
             End Date: {rental.EndDate:yyyy-MM-dd}
-            Total Price: {rental.TotalPrice}
+            Total Price: {rental.TotalPrice} ₾
             Status: {rental.Status}
             ";
 
@@ -152,6 +152,57 @@ namespace CarRental.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task ApproveRentalAsync(int rentalId)
+        {
+            var rental = await _context.Rentals
+                .Include(r => r.Car)
+                .Include(r => r.Customer)
+                .FirstOrDefaultAsync(r => r.Id == rentalId);
+            if (rental == null) throw new Exception("Rental not found.");
+
+            rental.Status = RentalStatus.Approved;
+            rental.Car!.IsAvailable = false;
+
+            await _context.SaveChangesAsync();
+
+            // Send email to customer
+            var subject = "Rental Approved";
+            var body = $@"Hi {rental.Customer!.Name},
+
+            Your rental request for {rental.Car.Make} {rental.Car.Model} has been approved!
+            Rental period: {rental.StartDate:yyyy-MM-dd} to {rental.EndDate:yyyy-MM-dd}
+            Total price: {rental.TotalPrice} ₾
+
+            You can now proceed with pickup arrangements.";
+
+            await _emailService.SendEmailAsync(rental.Customer.Email, subject, body);
+        }
+
+
+        public async Task DeclineRentalAsync(int rentalId)
+        {
+            var rental = await _context.Rentals
+                .Include(r => r.Car)
+                .Include(r => r.Customer)
+                .FirstOrDefaultAsync(r => r.Id == rentalId);
+            if (rental == null) throw new Exception("Rental not found.");
+
+            rental.Status = RentalStatus.Declined;
+            rental.Car!.IsAvailable = true;
+
+            await _context.SaveChangesAsync();
+
+            // Send email to customer
+            var subject = "Rental Declined";
+            var body = $@"Hi {rental.Customer!.Name},
+
+            We’re sorry to inform you that your rental request for {rental.Car.Make} {rental.Car.Model} has been declined.
+
+            Please feel free to explore other available options.";
+
+            await _emailService.SendEmailAsync(rental.Customer.Email, subject, body);
         }
 
 
