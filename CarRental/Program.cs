@@ -20,6 +20,7 @@ namespace CarRental
             builder.Services.AddScoped<ICarService, CarService>();
             builder.Services.AddScoped<ICustomerService, CustomerService>();
             builder.Services.AddScoped<IRentalService, RentalService>();
+            builder.Services.AddScoped<IAdminService, AdminService>();
 
 
 
