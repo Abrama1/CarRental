@@ -15,31 +15,38 @@ namespace CarRental.Services
             _context = context;
         }
 
-        public async Task<Rental?> GetByIdAsync(int rentalId)
+        public async Task<RentalResponse?> GetByIdAsync(int rentalId)
         {
-            return await _context.Rentals
+            var rental = await _context.Rentals
                 .Include(r => r.Car)
                 .Include(r => r.Customer)
                 .FirstOrDefaultAsync(r => r.Id == rentalId);
+
+            return rental == null ? null : MapToResponse(rental);
         }
 
-        public async Task<IEnumerable<Rental>> GetAllRentalsAsync()
+        public async Task<IEnumerable<RentalResponse>> GetAllRentalsAsync()
         {
-            return await _context.Rentals
+            var rentals = await _context.Rentals
                 .Include(r => r.Car)
                 .Include(r => r.Customer)
                 .ToListAsync();
+
+            return rentals.Select(MapToResponse);
         }
 
-        public async Task<IEnumerable<Rental>> GetRentalsForCustomerAsync(int customerId)
+        public async Task<IEnumerable<RentalResponse>> GetRentalsForCustomerAsync(int customerId)
         {
-            return await _context.Rentals
+            var rentals = await _context.Rentals
                 .Include(r => r.Car)
+                .Include(r => r.Customer)
                 .Where(r => r.CustomerId == customerId)
                 .ToListAsync();
+
+            return rentals.Select(MapToResponse);
         }
 
-        public async Task<Rental> CreateRentalAsync(CreateRentalRequest request)
+        public async Task<RentalResponse> CreateRentalAsync(CreateRentalRequest request)
         {
             var car = await _context.Cars.FindAsync(request.CarId);
             if (car == null) throw new Exception("Car not found.");
@@ -55,13 +62,14 @@ namespace CarRental.Services
             };
 
             _context.Rentals.Add(rental);
-
             car.IsAvailable = false;
-
             await _context.SaveChangesAsync();
-            return rental;
-        }
 
+            rental.Car = car;
+            rental.Customer = await _context.Customers.FindAsync(request.CustomerId);
+
+            return MapToResponse(rental);
+        }
 
         public async Task CancelRentalAsync(int rentalId, int customerId)
         {
@@ -102,6 +110,23 @@ namespace CarRental.Services
 
             rental.Status = status;
             await _context.SaveChangesAsync();
+        }
+
+        private static RentalResponse MapToResponse(Rental rental)
+        {
+            return new RentalResponse
+            {
+                Id = rental.Id,
+                CarId = rental.CarId,
+                CarMake = rental.Car?.Make ?? "",
+                CarModel = rental.Car?.Model ?? "",
+                CustomerId = rental.CustomerId,
+                CustomerName = rental.Customer?.Name ?? "",
+                StartDate = rental.StartDate,
+                EndDate = rental.EndDate,
+                TotalPrice = rental.TotalPrice,
+                Status = rental.Status.ToString()
+            };
         }
     }
 }
