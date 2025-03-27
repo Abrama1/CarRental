@@ -1,10 +1,9 @@
 ﻿using CarRental.Data.DTOs;
 using CarRental.Data.Models;
 using CarRental.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-// Alias to avoid conflict with Microsoft.AspNetCore.Identity.Data.LoginRequest
-using LoginDto = CarRental.Data.DTOs.LoginRequest;
+using System.Security.Claims;
 
 namespace CarRental.Controllers
 {
@@ -22,6 +21,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterCustomerRequest request)
         {
             await _customerService.RegisterAsync(request);
@@ -29,6 +29,7 @@ namespace CarRental.Controllers
         }
 
         [HttpGet("verify")]
+        [AllowAnonymous]
         public async Task<IActionResult> VerifyEmail(string email, string token)
         {
             var result = await _customerService.VerifyEmailAsync(email, token);
@@ -37,31 +38,44 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto request)
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var customer = await _customerService.LoginAsync(request.Email, request.Password);
-            if (customer == null) return Unauthorized("Invalid credentials or account not verified.");
-            return Ok(customer);
+            var token = await _customerService.LoginAsync(request.Email, request.Password);
+            if (token == null) return Unauthorized("Invalid credentials or account not verified.");
+            return Ok(new { Token = token });
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Get(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (userId != id) return Forbid();
+
             var customer = await _customerService.GetByIdAsync(id);
             if (customer == null) return NotFound();
             return Ok(customer);
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Update(int id, UpdateCustomerRequest request)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (userId != id) return Forbid();
+
             await _customerService.UpdateProfileAsync(id, request);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Delete(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (userId != id) return Forbid();
+
             await _customerService.DeleteCustomerAsync(id);
             return NoContent();
         }

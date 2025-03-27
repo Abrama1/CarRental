@@ -2,6 +2,7 @@
 using CarRental.Data.Models;
 using CarRental.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CarRental.Controllers
 {
@@ -17,6 +18,7 @@ namespace CarRental.Controllers
         }
 
         [HttpGet("all")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var cars = await _carService.GetAllAsync();
@@ -24,6 +26,7 @@ namespace CarRental.Controllers
         }
 
         [HttpGet("available")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAvailable()
         {
             var availableCars = await _carService.GetAvailableAsync();
@@ -31,6 +34,7 @@ namespace CarRental.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var car = await _carService.GetByIdAsync(id);
@@ -39,6 +43,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPost("add")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add(CarCreateRequest request)
         {
             await _carService.AddAsync(request);
@@ -47,6 +52,7 @@ namespace CarRental.Controllers
 
 
         [HttpPut("update")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(CarUpdateRequest request)
         {
             await _carService.UpdateAsync(request);
@@ -55,6 +61,7 @@ namespace CarRental.Controllers
 
 
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _carService.DeleteAsync(id);
@@ -62,6 +69,7 @@ namespace CarRental.Controllers
         }
 
         [HttpPatch("{id}/availability")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetAvailability(int id, [FromQuery] bool available)
         {
             await _carService.SetAvailabilityAsync(id, available);

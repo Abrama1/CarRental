@@ -11,11 +11,13 @@ namespace CarRental.Services
     {
         private readonly CarRentalDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly TokenService _tokenService;
 
-        public CustomerService(CarRentalDbContext context, IEmailService emailService)
+        public CustomerService(CarRentalDbContext context, IEmailService emailService, TokenService tokenService)
         {
             _context = context;
             _emailService = emailService;
+            _tokenService = tokenService;
         }
 
         public async Task RegisterAsync(RegisterCustomerRequest dto)
@@ -59,13 +61,18 @@ namespace CarRental.Services
             return true;
         }
 
-        public async Task<Customer?> LoginAsync(string email, string password)
+        public async Task<string?> LoginAsync(string email, string password)
         {
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == email && !c.IsDeleted);
-            if (customer == null || !customer.IsVerified) return null;
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(c => c.Email == email && !c.IsDeleted);
+
+            if (customer == null || !customer.IsVerified)
+                return null;
 
             bool valid = BCrypt.Net.BCrypt.Verify(password, customer.PasswordHash);
-            return valid ? customer : null;
+            return valid
+                ? _tokenService.CreateToken(customer.Id.ToString(), customer.Email, customer.Role)
+                : null;
         }
 
         public async Task<Customer?> GetByIdAsync(int id)

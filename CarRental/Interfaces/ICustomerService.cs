@@ -7,7 +7,7 @@ namespace CarRental.Interfaces
     {
         Task RegisterAsync(RegisterCustomerRequest dto);
         Task<bool> VerifyEmailAsync(string email, string token);
-        Task<Customer?> LoginAsync(string email, string password);
+        Task<string?> LoginAsync(string email, string password);
         Task<Customer?> GetByIdAsync(int id);
         Task<Customer?> GetByEmailAsync(string email);
         Task UpdateProfileAsync(int customerId, UpdateCustomerRequest dto);
