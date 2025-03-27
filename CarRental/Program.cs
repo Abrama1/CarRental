@@ -60,7 +60,7 @@ namespace CarRental
                     Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                    Description = "Enter your JWT token like this: Bearer {your token}"
+                    Description = "Enter your JWT token:"
                 });
 
                 options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
