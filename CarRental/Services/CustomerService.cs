@@ -75,10 +75,40 @@ namespace CarRental.Services
                 : null;
         }
 
-        public async Task<Customer?> GetByIdAsync(int id)
+        public async Task<CustomerResponse?> GetByIdAsync(int id)
         {
-            return await _context.Customers.FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+            var customer = await _context.Customers
+                .Include(c => c.Rentals)
+                    .ThenInclude(r => r.Car)
+                .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+
+            if (customer == null) return null;
+
+            return new CustomerResponse
+            {
+                Id = customer.Id,
+                Name = customer.Name,
+                Email = customer.Email,
+                Phone = customer.Phone,
+                JoinDate = customer.JoinDate,
+                Role = customer.Role,
+                Rentals = customer.Rentals.Select(r => new RentalResponse
+                {
+                    Id = r.Id,
+                    CarId = r.CarId,
+                    CarMake = r.Car?.Make ?? "",
+                    CarModel = r.Car?.Model ?? "",
+                    CustomerId = r.CustomerId,
+                    CustomerName = customer.Name,
+                    CustomerPhone = customer.Phone,
+                    StartDate = r.StartDate,
+                    EndDate = r.EndDate,
+                    TotalPrice = r.TotalPrice,
+                    Status = r.Status.ToString()
+                }).ToList()
+            };
         }
+
 
         public async Task<Customer?> GetByEmailAsync(string email)
         {

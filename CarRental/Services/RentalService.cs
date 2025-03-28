@@ -64,7 +64,6 @@ namespace CarRental.Services
             };
 
             _context.Rentals.Add(rental);
-            car.IsAvailable = false;
             await _context.SaveChangesAsync();
 
 
@@ -265,9 +264,6 @@ namespace CarRental.Services
                     case RentalStatus.Cancelled:
                     case RentalStatus.Completed:
                     case RentalStatus.Declined:
-                        car.IsAvailable = true;
-                        break;
-
                     case RentalStatus.PendingApproval:
                         car.IsAvailable = true;
                         break;
