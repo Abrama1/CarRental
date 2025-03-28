@@ -9,6 +9,7 @@ namespace CarRental.Interfaces
         Task<IEnumerable<RentalResponse>> GetAllRentalsAsync();
         Task<IEnumerable<RentalResponse>> GetRentalsForCustomerAsync(int customerId);
         Task<RentalResponse> CreateRentalAsync(CreateRentalRequest request);
+        Task UpdateRentalAsync(int rentalId, CreateRentalRequest request);
         Task CancelRentalAsync(int rentalId, int customerId);
         Task CompleteRentalAsync(int rentalId);
         Task SetStatusAsync(int rentalId, RentalStatus status);

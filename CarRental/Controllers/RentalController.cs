@@ -3,6 +3,7 @@ using CarRental.Data.Models;
 using CarRental.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
 using System.Security.Claims;
 
 namespace CarRental.Controllers
@@ -22,14 +23,52 @@ namespace CarRental.Controllers
         [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> Create(CreateRentalRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
+
+            if (userIdClaim == null || roleClaim == null)
+                return Unauthorized("Missing user claims.");
+
+            var userId = userIdClaim.Value;
+            var role = roleClaim.Value;
 
             if (role != "Admin" && userId != request.CustomerId.ToString())
-                return Forbid("Access denied: You can only create rentals for your own account.");
+                return Forbid();
 
             var rental = await _rentalService.CreateRentalAsync(request);
             return Ok(rental);
+        }
+
+        [HttpPut("update/{rentalId}")]
+        [Authorize(Roles = "Customer,Admin")]
+        public async Task<IActionResult> Update(int rentalId, CreateRentalRequest request)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
+
+            if (userIdClaim == null || roleClaim == null)
+                return Unauthorized("Missing user claims.");
+
+            var userId = userIdClaim.Value;
+            var role = roleClaim.Value;
+
+            var existingRental = await _rentalService.GetByIdAsync(rentalId);
+            if (existingRental == null) return NotFound();
+
+            if (role != "Admin" && userId != existingRental.CustomerId.ToString())
+                return Forbid();
+
+            if (existingRental.EndDate < DateTime.UtcNow)
+                return BadRequest("Cannot update a rental that has already ended.");
+
+            if (existingRental.StartDate <= request.StartDate && request.StartDate != existingRental.StartDate)
+                return BadRequest($"Cannot change start date for ongoing rentals.");
+
+            if (request.EndDate < DateTime.UtcNow)
+                return BadRequest("End date must be in the future.");
+
+            await _rentalService.UpdateRentalAsync(rentalId, request);
+            return Ok("Rental updated successfully.");
         }
 
         [HttpGet("all")]
@@ -54,8 +93,11 @@ namespace CarRental.Controllers
         public async Task<IActionResult> GetByCustomer(int customerId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
 
-            if (userId == null || userId != customerId.ToString())
+            var role = roleClaim.Value;
+
+            if (role != "Admin" && (userId == null || userId != customerId.ToString()))
                 return Forbid("Access denied: You can only view your own rentals.");
 
             var rentals = await _rentalService.GetRentalsForCustomerAsync(customerId);

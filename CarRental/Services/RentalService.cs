@@ -89,6 +89,40 @@ namespace CarRental.Services
             return MapToResponse(rental);
         }
 
+        public async Task UpdateRentalAsync(int rentalId, CreateRentalRequest request)
+        {
+            var rental = await _context.Rentals.Include(r => r.Car).FirstOrDefaultAsync(r => r.Id == rentalId);
+            if (rental == null) throw new Exception("Rental not found.");
+
+            if (rental.CustomerId != request.CustomerId)
+                throw new Exception("You are not authorized to modify this rental.");
+
+            var today = DateTime.UtcNow.Date;
+
+            if (rental.StartDate.Date > today)
+            {
+                // Future rental — allow full update
+                rental.StartDate = request.StartDate;
+                rental.EndDate = request.EndDate;
+            }
+            else if (rental.StartDate.Date <= today && rental.EndDate.Date >= today)
+            {
+                // Ongoing rental — allow only end date extension
+                if (request.EndDate.Date < today)
+                    throw new Exception("End date must be in the future.");
+
+                rental.EndDate = request.EndDate;
+            }
+            else
+            {
+                throw new Exception("Cannot update a rental that has already ended.");
+            }
+
+            rental.TotalPrice = (rental.EndDate - rental.StartDate).Days * rental.Car.DailyRate;
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task CancelRentalAsync(int rentalId, int customerId)
         {
             var rental = await _context.Rentals.FirstOrDefaultAsync(r => r.Id == rentalId && r.CustomerId == customerId);
