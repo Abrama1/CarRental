@@ -5,9 +5,9 @@ namespace CarRental.Interfaces
 {
     public interface ICarService
     {
-        Task<IEnumerable<Car>> GetAllAsync();
-        Task<IEnumerable<Car>> GetAvailableAsync();
-        Task<Car?> GetByIdAsync(int id);
+        Task<IEnumerable<CarResponse>> GetAllAsync();
+        Task<IEnumerable<CarResponse>> GetAvailableAsync();
+        Task<CarResponse?> GetByIdAsync(int id);
         Task AddAsync(CarCreateRequest request);
         Task UpdateAsync(CarUpdateRequest request);
         Task DeleteAsync(int id);

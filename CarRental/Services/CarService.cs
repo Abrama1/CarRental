@@ -9,27 +9,34 @@ namespace CarRental.Services
     public class CarService : ICarService
     {
         private readonly CarRentalDbContext _context;
+        private readonly IWebHostEnvironment _env;
+        private readonly IHttpContextAccessor _httpContext;
 
-        public CarService(CarRentalDbContext context)
+        public CarService(CarRentalDbContext context, IWebHostEnvironment env, IHttpContextAccessor httpContext)
         {
             _context = context;
+            _env = env;
+            _httpContext = httpContext;
         }
 
-        public async Task<IEnumerable<Car>> GetAllAsync()
+        public async Task<IEnumerable<CarResponse>> GetAllAsync()
         {
-            return await _context.Cars.ToListAsync();
+            var cars = await _context.Cars.ToListAsync();
+            return cars.Select(MapToResponse);
         }
 
-        public async Task<IEnumerable<Car>> GetAvailableAsync()
+        public async Task<IEnumerable<CarResponse>> GetAvailableAsync()
         {
-            return await _context.Cars
+            var availableCars = await _context.Cars
                 .Where(c => c.IsAvailable)
                 .ToListAsync();
+            return availableCars.Select(MapToResponse);
         }
 
-        public async Task<Car?> GetByIdAsync(int id)
+        public async Task<CarResponse?> GetByIdAsync(int id)
         {
-            return await _context.Cars.FindAsync(id);
+            var car = await _context.Cars.FindAsync(id);
+            return car == null ? null : MapToResponse(car);
         }
 
         public async Task AddAsync(CarCreateRequest request)
@@ -42,14 +49,30 @@ namespace CarRental.Services
                 DailyRate = request.DailyRate,
                 Location = request.Location,
                 LicensePlate = request.LicensePlate,
-                ImageUrl = request.ImageUrl,
                 IsAvailable = true
             };
+
+            if (request.Images != null && request.Images.Count > 0)
+            {
+                foreach (var image in request.Images)
+                {
+                    var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    car.ImageUrls.Add("/uploads/" + fileName);
+                }
+            }
 
             _context.Cars.Add(car);
             await _context.SaveChangesAsync();
         }
-
 
         public async Task UpdateAsync(CarUpdateRequest request)
         {
@@ -63,16 +86,44 @@ namespace CarRental.Services
             existing.Location = request.Location;
             existing.IsAvailable = request.IsAvailable;
             existing.LicensePlate = request.LicensePlate;
-            existing.ImageUrl = request.ImageUrl;
+
+            if (request.Images != null && request.Images.Count > 0)
+            {
+                foreach (var image in request.Images)
+                {
+                    var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    existing.ImageUrls.Add("/uploads/" + fileName);
+                }
+            }
 
             await _context.SaveChangesAsync();
         }
-
 
         public async Task DeleteAsync(int id)
         {
             var car = await _context.Cars.FindAsync(id);
             if (car == null) return;
+
+            if (car.ImageUrls != null && car.ImageUrls.Count > 0)
+            {
+                foreach (var imageUrl in car.ImageUrls)
+                {
+                    var filePath = Path.Combine(_env.WebRootPath, imageUrl.TrimStart('/'));
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+                }
+            }
 
             _context.Cars.Remove(car);
             await _context.SaveChangesAsync();
@@ -85,6 +136,23 @@ namespace CarRental.Services
 
             car.IsAvailable = isAvailable;
             await _context.SaveChangesAsync();
+        }
+
+        private CarResponse MapToResponse(Car car)
+        {
+            var baseUrl = $"{_httpContext.HttpContext!.Request.Scheme}://{_httpContext.HttpContext.Request.Host}";
+            return new CarResponse
+            {
+                Id = car.Id,
+                Make = car.Make,
+                Model = car.Model,
+                Year = car.Year,
+                DailyRate = car.DailyRate,
+                Location = car.Location,
+                IsAvailable = car.IsAvailable,
+                LicensePlate = car.LicensePlate,
+                ImageUrls = car.ImageUrls?.Select(url => $"{baseUrl}{url}").ToList() ?? new List<string>()
+            };
         }
     }
 }

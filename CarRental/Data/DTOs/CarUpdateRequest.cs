@@ -10,7 +10,7 @@
         public string Location { get; set; } = null!;
         public bool IsAvailable { get; set; }
         public string? LicensePlate { get; set; }
-        public string? ImageUrl { get; set; }
+        public IFormFileCollection? Images { get; set; }
     }
 
 }

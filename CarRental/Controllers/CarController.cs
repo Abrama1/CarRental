@@ -44,7 +44,7 @@ namespace CarRental.Controllers
 
         [HttpPost("add")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Add(CarCreateRequest request)
+        public async Task<IActionResult> Add([FromForm] CarCreateRequest request)
         {
             await _carService.AddAsync(request);
             return Ok("Car added successfully.");
@@ -53,7 +53,7 @@ namespace CarRental.Controllers
 
         [HttpPut("update")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(CarUpdateRequest request)
+        public async Task<IActionResult> Update([FromForm] CarUpdateRequest request)
         {
             await _carService.UpdateAsync(request);
             return Ok("Car updated successfully.");

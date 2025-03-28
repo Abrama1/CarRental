@@ -26,6 +26,7 @@ namespace CarRental
             builder.Services.AddScoped<IAdminService, AdminService>();
             builder.Services.AddSingleton<TokenService>();
 
+            builder.Services.AddHttpContextAccessor();
             // JWT Authentication setup
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             builder.Services.AddAuthentication(options =>

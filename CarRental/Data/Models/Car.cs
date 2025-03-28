@@ -14,8 +14,7 @@ namespace CarRental.Data.Models
         public string Location { get; set; } = null!;
         public bool IsAvailable { get; set; } = true;
         public string? LicensePlate { get; set; }
-        public string? ImageUrl { get; set; }
-
+        public List<string> ImageUrls { get; set; } = new();
         public ICollection<Rental> Rentals { get; set; } = new List<Rental>();
     }
 }
