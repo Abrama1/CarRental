@@ -74,15 +74,57 @@ namespace CarRental.Services
             string adminEmail = "carrentalalemailservice@gmail.com";
             string subject = "New Rental Request Received";
             string message = $@"
-            Rental ID: {rental.Id}
-            Car: {car.Make} {car.Model}
-            Customer ID: {rental.CustomerId}
-            Customer Phone: {rental.Customer.Phone}
-            Start Date: {rental.StartDate:yyyy-MM-dd}
-            End Date: {rental.EndDate:yyyy-MM-dd}
-            Total Price: {rental.TotalPrice} ₾
-            Status: {rental.Status}
-            ";
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; border-radius: 10px; max-width: 600px; margin: auto; background-color: #fdfdfd;'>
+                <h2 style='color: #2c3e50; margin-top: 0;'>📄 New Rental Request</h2>
+
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Rental ID:</strong></td>
+                        <td style='padding: 8px;'>{rental.Id}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Car:</strong></td>
+                        <td style='padding: 8px;'>{car.Make} {car.Model}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Customer ID:</strong></td>
+                        <td style='padding: 8px;'>{rental.CustomerId}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Phone:</strong></td>
+                        <td style='padding: 8px;'>{rental.Customer.Phone}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Start Date:</strong></td>
+                        <td style='padding: 8px;'>{rental.StartDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>End Date:</strong></td>
+                        <td style='padding: 8px;'>{rental.EndDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Total Price:</strong></td>
+                        <td style='padding: 8px;'>{rental.TotalPrice} ₾</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Status:</strong></td>
+                        <td style='padding: 8px; color: #d35400;'><strong>{rental.Status}</strong></td>
+                    </tr>
+                </table>
+
+                <hr style='margin: 30px 0; border: none; border-top: 1px solid #ccc;' />
+
+                <footer style='font-size: 0.9em; color: #777;'>
+                    <p>CarRental Inc. | <a href='mailto:contact@carrental.com' style='color: #3498db;'>contact@carrental.com</a></p>
+                    <p>
+                        <a href='https://facebook.com' style='margin-right: 10px; color: #3b5998;'>Facebook</a>
+                        <a href='https://twitter.com' style='margin-right: 10px; color: #1da1f2;'>Twitter</a>
+                        <a href='https://instagram.com' style='color: #e1306c;'>Instagram</a>
+                    </p>
+                </footer>
+            </div>";
+
+
 
             await _emailService.SendEmailAsync(adminEmail, subject, message);
 
@@ -91,7 +133,7 @@ namespace CarRental.Services
 
         public async Task UpdateRentalAsync(int rentalId, CreateRentalRequest request)
         {
-            var rental = await _context.Rentals.Include(r => r.Car).FirstOrDefaultAsync(r => r.Id == rentalId);
+            var rental = await _context.Rentals.Include(r => r.Car).Include(r => r.Customer).FirstOrDefaultAsync(r => r.Id == rentalId);
             if (rental == null) throw new Exception("Rental not found.");
 
             if (rental.CustomerId != request.CustomerId)
@@ -101,13 +143,11 @@ namespace CarRental.Services
 
             if (rental.StartDate.Date > today)
             {
-                // Future rental — allow full update
                 rental.StartDate = request.StartDate;
                 rental.EndDate = request.EndDate;
             }
             else if (rental.StartDate.Date <= today && rental.EndDate.Date >= today)
             {
-                // Ongoing rental — allow only end date extension
                 if (request.EndDate.Date < today)
                     throw new Exception("End date must be in the future.");
 
@@ -119,8 +159,57 @@ namespace CarRental.Services
             }
 
             rental.TotalPrice = (rental.EndDate - rental.StartDate).Days * rental.Car.DailyRate;
-
             await _context.SaveChangesAsync();
+
+            // Email admin about the update
+            string adminEmail = "carrentalalemailservice@gmail.com";
+            string subject = "Rental Updated by Customer";
+            string message = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; border-radius: 10px; max-width: 600px; margin: auto; background-color: #fdfdfd;'>
+                <h2 style='color: #2980b9; margin-top: 0;'>🛠️ Rental Updated</h2>
+
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Rental ID:</strong></td>
+                        <td style='padding: 8px;'>{rental.Id}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Car:</strong></td>
+                        <td style='padding: 8px;'>{rental.Car.Make} {rental.Car.Model}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Customer:</strong></td>
+                        <td style='padding: 8px;'>{rental.Customer.Name} ({rental.Customer.Email})</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>New Start Date:</strong></td>
+                        <td style='padding: 8px;'>{rental.StartDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 8px;'><strong>New End Date:</strong></td>
+                        <td style='padding: 8px;'>{rental.EndDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Updated Total Price:</strong></td>
+                        <td style='padding: 8px;'>{rental.TotalPrice} ₾</td>
+                    </tr>
+                </table>
+
+                <hr style='margin: 30px 0; border: none; border-top: 1px solid #ccc;' />
+
+                <footer style='font-size: 0.9em; color: #777;'>
+                    <p>CarRental Inc. | <a href='mailto:contact@carrental.com' style='color: #3498db;'>contact@carrental.com</a></p>
+                    <p>
+                        <a href='https://facebook.com' style='margin-right: 10px; color: #3b5998;'>Facebook</a>
+                        <a href='https://twitter.com' style='margin-right: 10px; color: #1da1f2;'>Twitter</a>
+                        <a href='https://instagram.com' style='color: #e1306c;'>Instagram</a>
+                    </p>
+                </footer>
+            </div>";
+
+
+
+            await _emailService.SendEmailAsync(adminEmail, subject, message);
         }
 
         public async Task CancelRentalAsync(int rentalId, int customerId)
@@ -203,13 +292,30 @@ namespace CarRental.Services
 
             // Send email to customer
             var subject = "Rental Approved";
-            var body = $@"Hi {rental.Customer!.Name},
+            var body = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #4CAF50; border-radius: 10px; max-width: 600px; margin: auto; background-color: #f6fffa;'>
+                <h2 style='color: #2e7d32;'>✅ Rental Approved</h2>
+                <p>Hi {rental.Customer!.Name},</p>
+                <p>Your rental request for <strong>{rental.Car.Make} {rental.Car.Model}</strong> has been <strong>approved</strong>! 🎉</p>
 
-            Your rental request for {rental.Car.Make} {rental.Car.Model} has been approved!
-            Rental period: {rental.StartDate:yyyy-MM-dd} to {rental.EndDate:yyyy-MM-dd}
-            Total price: {rental.TotalPrice} ₾
+                <table style='width: 100%; border-collapse: collapse; margin-top: 15px;'>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Rental Period:</strong></td>
+                        <td style='padding: 8px;'>{rental.StartDate:yyyy-MM-dd} to {rental.EndDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr style='background-color: #f0f0f0;'>
+                        <td style='padding: 8px;'><strong>Total Price:</strong></td>
+                        <td style='padding: 8px;'>{rental.TotalPrice} ₾</td>
+                    </tr>
+                </table>
 
-            You can now proceed with pickup arrangements.";
+                <p style='margin-top: 20px;'>You can now proceed with the pickup arrangements.</p>
+
+                <hr style='margin: 30px 0; border: none; border-top: 1px solid #ccc;' />
+                <footer style='font-size: 0.9em; color: #777;'>
+                    <p>CarRental Inc. | <a href='mailto:contact@carrental.com' style='color: #3498db;'>contact@carrental.com</a></p>
+                </footer>
+            </div>";
 
             await _emailService.SendEmailAsync(rental.Customer.Email, subject, body);
         }
@@ -230,11 +336,18 @@ namespace CarRental.Services
 
             // Send email to customer
             var subject = "Rental Declined";
-            var body = $@"Hi {rental.Customer!.Name},
+            var body = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e74c3c; border-radius: 10px; max-width: 600px; margin: auto; background-color: #fff6f6;'>
+                <h2 style='color: #c0392b;'>❌ Rental Declined</h2>
+                <p>Hi {rental.Customer!.Name},</p>
+                <p>We’re sorry to inform you that your rental request for <strong>{rental.Car.Make} {rental.Car.Model}</strong> has been <strong>declined</strong>.</p>
+                <p>Please feel free to explore other available vehicles on our platform — we’re here to help you find the right fit.</p>
 
-            We’re sorry to inform you that your rental request for {rental.Car.Make} {rental.Car.Model} has been declined.
-
-            Please feel free to explore other available options.";
+                <hr style='margin: 30px 0; border: none; border-top: 1px solid #ccc;' />
+                <footer style='font-size: 0.9em; color: #777;'>
+                    <p>CarRental Inc. | <a href='mailto:contact@carrental.com' style='color: #3498db;'>contact@carrental.com</a></p>
+                </footer>
+            </div>";
 
             await _emailService.SendEmailAsync(rental.Customer.Email, subject, body);
         }
