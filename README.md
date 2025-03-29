@@ -126,38 +126,6 @@ Visit: `https://localhost:7229/swagger`
 
 ---
 
-## 📁 Folder Structure (Key)
-
-```
-CarRental/
-│
-├── Controllers/
-│   └── AdminController.cs
-│   └── CarController.cs
-│   └── CustomerController.cs
-│   └── RentalController.cs
-│
-├── Services/
-│   └── CarService.cs
-│   └── CustomerService.cs
-│   └── RentalService.cs
-│
-├── DTOs/
-│   └── CarCreateRequest.cs
-│   └── CarUpdateRequest.cs
-│   └── CreateRentalRequest.cs
-│   └── RentalResponse.cs
-│
-├── Models/
-│   └── Car.cs
-│   └── Customer.cs
-│   └── Rental.cs
-│
-└── wwwroot/uploads/
-```
-
----
-
 ## 🛡️ Security Notes
 
 - Passwords are hashed using **BCrypt**
