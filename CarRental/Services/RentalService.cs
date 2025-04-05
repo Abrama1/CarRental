@@ -229,7 +229,10 @@ namespace CarRental.Services
 
         public async Task CompleteRentalAsync(int rentalId)
         {
-            var rental = await _context.Rentals.FindAsync(rentalId);
+            var rental = await _context.Rentals
+                .Include(r => r.Car)
+                .Include(r => r.Customer)
+                .FirstOrDefaultAsync(r => r.Id == rentalId);
             if (rental == null) return;
 
             rental.Status = RentalStatus.Completed;
@@ -241,6 +244,41 @@ namespace CarRental.Services
             }
 
             await _context.SaveChangesAsync();
+
+            // Send thank-you email to customer
+            var subject = "Thank You for Using CarRental!";
+            var body = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; border-radius: 10px; max-width: 600px; margin: auto; background-color: #ffffff;'>
+                <h2 style='color: #2c3e50;'>🙏 Thank You for Renting with Us!</h2>
+                <p>Hi {rental.Customer!.Name},</p>
+                <p>We hope you enjoyed your experience with <strong>{rental.Car.Make} {rental.Car.Model}</strong>.</p>
+
+                <table style='width: 100%; border-collapse: collapse; margin-top: 15px;'>
+                    <tr>
+                        <td style='padding: 8px;'><strong>Rental Period:</strong></td>
+                        <td style='padding: 8px;'>{rental.StartDate:yyyy-MM-dd} to {rental.EndDate:yyyy-MM-dd}</td>
+                    </tr>
+                    <tr style='background-color: #f9f9f9;'>
+                        <td style='padding: 8px;'><strong>Total Paid:</strong></td>
+                        <td style='padding: 8px;'>{rental.TotalPrice} ₾</td>
+                    </tr>
+                </table>
+
+                <p style='margin-top: 20px;'>We appreciate your trust in CarRental and look forward to serving you again.</p>
+
+                <hr style='margin: 30px 0; border: none; border-top: 1px solid #ccc;' />
+
+                <footer style='font-size: 0.9em; color: #777;'>
+                    <p>CarRental Inc. | <a href='mailto:contact@carrental.com' style='color: #3498db;'>contact@carrental.com</a></p>
+                    <p>
+                        <a href='https://facebook.com' style='margin-right: 10px; color: #3b5998;'>Facebook</a>
+                        <a href='https://twitter.com' style='margin-right: 10px; color: #1da1f2;'>Twitter</a>
+                        <a href='https://instagram.com' style='color: #e1306c;'>Instagram</a>
+                    </p>
+                </footer>
+            </div>";
+
+            await _emailService.SendEmailAsync(rental.Customer.Email, subject, body);
         }
 
         public async Task SetStatusAsync(int rentalId, RentalStatus status)
