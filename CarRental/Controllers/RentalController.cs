@@ -109,8 +109,11 @@ namespace CarRental.Controllers
         public async Task<IActionResult> Cancel(int rentalId, int customerId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
 
-            if (userId == null || userId != customerId.ToString())
+            var role = roleClaim.Value;
+
+            if ((userId == null || userId != customerId.ToString()) & role != "Admin")
                 return Forbid("Access denied: You can only cancel your own rentals.");
 
             await _rentalService.CancelRentalAsync(rentalId, customerId);
