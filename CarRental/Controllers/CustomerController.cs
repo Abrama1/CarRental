@@ -2,6 +2,7 @@
 using CarRental.Data.Models;
 using CarRental.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -51,7 +52,11 @@ namespace CarRental.Controllers
         public async Task<IActionResult> Get(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (userId != id) return Forbid();
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
+
+            var role = roleClaim.Value;
+
+            if ((userId != id) & role != "Admin") return Forbid();
 
             var customer = await _customerService.GetByIdAsync(id);
             if (customer == null) return NotFound();
