@@ -90,9 +90,10 @@ namespace CarRental
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins("http://localhost:5173")
                           .AllowAnyHeader()
-                          .AllowAnyMethod();
+                          .AllowAnyMethod()
+                          .AllowCredentials();
                 });
             });
 
@@ -109,7 +110,8 @@ namespace CarRental
 
             app.UseStaticFiles();
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection(); // commented for SSL cert issues
+            app.UseCors(); // using for ssl cert issues
 
             app.UseAuthentication();
             app.UseAuthorization();
